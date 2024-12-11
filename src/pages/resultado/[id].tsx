@@ -96,10 +96,10 @@ export default function Resultado() {
 
         if(resultado.includes('4')) {
             setResultado("Categoria 4 - O método não deve ser usado");
-        } else if(resultado.includes('3')) {
-            setResultado("Categoria 3 - Em geral, não se recomenda o uso do método a menos que outros métodos, mais adequados não estejam disponíveis ou sejam aceitáveis ( Em locais onde o risco de morbidade e mortalidade são elevados e este método é um dos poucos contraceptivosamplamente disponíveis, o mesmo poderá ser disponibilizado a mulheres amamentando imediatamente após o parto )");
         } else if(resultado.includes('3a')) {
-            setResultado("Categoria 3a - Em geral, não se recomenda o uso do método a menos que outros métodos, mais adequados não estejam disponíveis ou sejam aceitáveis");
+            setResultado("Categoria 3a - Em geral, não se recomenda o uso do método a menos que outros métodos, mais adequados não estejam disponíveis ou sejam aceitáveis ( Em locais onde o risco de morbidade e mortalidade são elevados e este método é um dos poucos contraceptivosamplamente disponíveis, o mesmo poderá ser disponibilizado a mulheres amamentando imediatamente após o parto )");
+        } else if(resultado.includes('3')) {
+            setResultado("Categoria 3 - Em geral, não se recomenda o uso do método a menos que outros métodos, mais adequados não estejam disponíveis ou sejam aceitáveis");
         } else if(resultado.includes('2')) {
             setResultado("Categoria 2 - De modo geral, use o método");
         } else if(resultado.includes('2c')) {
