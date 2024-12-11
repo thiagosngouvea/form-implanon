@@ -125,6 +125,13 @@ export default function Resultado() {
             </div>
         )}
 
+        <button
+            onClick={() => router.push("/")}
+            className="bg-blue-500 text-white rounded-md p-2 mt-4 w-32"
+        >
+            Voltar
+        </button>
+
     </div>
   );
 }
