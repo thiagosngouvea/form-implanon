@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
-import { Card, Descriptions, Timeline, Button, Space, Empty, Spin } from 'antd';
+import { Card, Descriptions, Button, Space, Empty, Spin, Grid } from 'antd';
 import { ArrowLeftOutlined, PlusOutlined } from '@ant-design/icons';
 import { collection, query, where, getDocs, doc, getDoc } from "firebase/firestore";
 import { db } from "@firebase/firebaseConfig";
 import { DocumentData } from "firebase/firestore";
+
+const { useBreakpoint } = Grid;
 
 interface Patient {
   id: string;
@@ -19,6 +21,7 @@ interface Patient {
 const ResultadosPaciente: React.FC = () => {
   const router = useRouter();
   const { id } = router.query;
+  const screens = useBreakpoint();
 
   const [patientData, setPatientData] = useState<Patient | null>(null);
   const [formResponses, setFormResponses] = useState<DocumentData | null>(null);
@@ -263,28 +266,85 @@ const ResultadosPaciente: React.FC = () => {
     );
   }
 
+  // Ajuste de padding responsivo
+  const getResponsivePadding = () => {
+    if (screens.xs) return '8px';
+    if (screens.sm) return '12px';
+    if (screens.md) return '16px';
+    return '24px';
+  };
+
+  // Ajuste de colunas responsivo para Descriptions
+  const getDescriptionsColumn = () => {
+    if (screens.xs) return 1;
+    if (screens.sm) return 1;
+    if (screens.md) return 2;
+    return 2;
+  };
+
+  // Ajuste de layout dos botões para mobile
+  const buttonDirection = screens.md ? 'horizontal' : 'vertical';
+  const buttonBlock = !screens.md;
+
   return (
     <>
-      <Space direction="vertical" size="large" style={{ width: '100%', padding: '24px' }}>
-        <Space>
-          <Button 
-            icon={<ArrowLeftOutlined />} 
+      <Space
+        direction="vertical"
+        size="large"
+        style={{
+          width: '100%',
+          padding: getResponsivePadding(),
+          minHeight: '100vh',
+          boxSizing: 'border-box',
+        }}
+      >
+        <Space
+          direction={buttonDirection}
+          size="middle"
+          style={{
+            width: '100%',
+            justifyContent: screens.md ? 'flex-start' : 'center',
+            flexWrap: 'wrap',
+            gap: screens.md ? undefined : '8px',
+          }}
+        >
+          <Button
+            icon={<ArrowLeftOutlined />}
             onClick={() => router.back()}
+            block={buttonBlock}
+            style={buttonBlock ? { width: '100%' } : undefined}
           >
             Voltar
           </Button>
-          <Button 
-            type="primary" 
+          <Button
+            type="primary"
             icon={<PlusOutlined />}
             onClick={() => router.push(`/formulario/${id}`)}
+            block={buttonBlock}
+            style={buttonBlock ? { width: '100%' } : undefined}
           >
             Novo Formulário
           </Button>
         </Space>
 
         {patientData && (
-          <Card title="Informações do Paciente" bordered={false}>
-            <Descriptions column={2}>
+          <Card
+            title="Informações do Paciente"
+            bordered={false}
+            style={{
+              width: '100%',
+              marginTop: screens.xs ? 12 : 0,
+            }}
+            bodyStyle={{
+              padding: getResponsivePadding(),
+            }}
+          >
+            <Descriptions
+              column={getDescriptionsColumn()}
+              size={screens.xs ? 'small' : 'default'}
+              layout={screens.xs ? 'vertical' : 'horizontal'}
+              style={{ width: '100%' }}
+            >
               <Descriptions.Item label="Nome">{patientData.nome}</Descriptions.Item>
               <Descriptions.Item label="Data de Nascimento">
                 {patientData.dataNascimento}
@@ -303,27 +363,76 @@ const ResultadosPaciente: React.FC = () => {
         )}
 
         {formResponses && (
-          <Card title="Resultado da Avaliação" bordered={false}>
-            <div className="mb-6">
-              <h3 className="text-xl font-bold mb-2" style={{ color: getStatusColor() }}>
+          <Card
+            title="Resultado da Avaliação"
+            bordered={false}
+            style={{
+              width: '100%',
+              marginTop: screens.xs ? 12 : 0,
+            }}
+            bodyStyle={{
+              padding: getResponsivePadding(),
+            }}
+          >
+            <div className="mb-6" style={{ marginBottom: screens.xs ? 12 : 24 }}>
+              <h3
+                className="text-xl font-bold mb-2"
+                style={{
+                  color: getStatusColor(),
+                  fontSize: screens.xs ? 18 : 22,
+                  marginBottom: screens.xs ? 8 : 16,
+                }}
+              >
                 {resultado}
               </h3>
               {motivos.length > 0 && (
-                <div className="mt-4 p-4 bg-gray-100 rounded-lg">
-                  <div className="font-bold mb-2">Motivos para esta classificação:</div>
-                  <ul className="list-disc pl-5">
+                <div
+                  className="mt-4 p-4 bg-gray-100 rounded-lg"
+                  style={{
+                    marginTop: screens.xs ? 8 : 16,
+                    padding: screens.xs ? 8 : 16,
+                    borderRadius: 8,
+                    background: '#f5f5f5',
+                  }}
+                >
+                  <div
+                    className="font-bold mb-2"
+                    style={{
+                      fontWeight: 600,
+                      marginBottom: screens.xs ? 4 : 8,
+                    }}
+                  >
+                    Motivos para esta classificação:
+                  </div>
+                  <ul
+                    className="list-disc pl-5"
+                    style={{
+                      paddingLeft: screens.xs ? 16 : 24,
+                      marginBottom: 0,
+                    }}
+                  >
                     {motivos.map((motivo, index) => (
-                      <li key={index} className="mb-1">{motivo}</li>
+                      <li key={index} className="mb-1" style={{ marginBottom: screens.xs ? 2 : 4 }}>
+                        {motivo}
+                      </li>
                     ))}
                   </ul>
                 </div>
               )}
             </div>
-
-            <div className="mt-6">
-              <h3 className="text-lg font-bold mb-4">Respostas do Formulário:</h3>
+{/* 
+            <div className="mt-6" style={{ marginTop: screens.xs ? 12 : 24 }}>
+              <h3
+                className="text-lg font-bold mb-4"
+                style={{
+                  fontSize: screens.xs ? 16 : 20,
+                  marginBottom: screens.xs ? 8 : 16,
+                }}
+              >
+                Respostas do Formulário:
+              </h3>
               <Timeline
-                mode="left"
+                mode={screens.md ? "left" : "right"}
                 items={Object.entries(formResponses)
                   .filter(([key]) => !['userId', 'submittedAt'].includes(key))
                   .map(([key, value]) => ({
@@ -331,18 +440,42 @@ const ResultadosPaciente: React.FC = () => {
                     label: new Date(formResponses.submittedAt).toLocaleDateString(),
                     children: (
                       <div>
-                        <h4>{key.replace(/_/g, ' ').toUpperCase()}</h4>
-                        <p>{value.toString()}</p>
+                        <h4
+                          style={{
+                            fontSize: screens.xs ? 13 : 16,
+                            fontWeight: 600,
+                            marginBottom: screens.xs ? 2 : 4,
+                          }}
+                        >
+                          {key.replace(/_/g, ' ').toUpperCase()}
+                        </h4>
+                        <p style={{ fontSize: screens.xs ? 12 : 14, margin: 0 }}>
+                          {value.toString()}
+                        </p>
                       </div>
                     ),
                   }))}
+                style={{
+                  paddingLeft: screens.xs ? 0 : 16,
+                  paddingRight: screens.xs ? 0 : 16,
+                }}
               />
-            </div>
+            </div> */}
           </Card>
         )}
 
         {!formResponses && (
-          <Card title="Histórico de Avaliações" bordered={false}>
+          <Card
+            title="Histórico de Avaliações"
+            bordered={false}
+            style={{
+              width: '100%',
+              marginTop: screens.xs ? 12 : 0,
+            }}
+            bodyStyle={{
+              padding: getResponsivePadding(),
+            }}
+          >
             <Empty description="Nenhuma avaliação encontrada" />
           </Card>
         )}

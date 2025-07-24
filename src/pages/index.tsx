@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Table, Input, Card, Button, Space } from 'antd';
-import { SearchOutlined, PlusOutlined } from '@ant-design/icons';
+import { Table, Input, Card, Button, Space, Dropdown, Grid } from 'antd';
+import { SearchOutlined, PlusOutlined, MoreOutlined, EditOutlined, FileOutlined, BarChartOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/router';
 import type { ColumnsType } from 'antd/es/table';
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "@firebase/firebaseConfig";
+
+const { useBreakpoint } = Grid;
 
 interface Patient {
   id: string;
@@ -23,6 +25,11 @@ const ListagemPacientes: React.FC = () => {
   const [searchText, setSearchText] = useState('');
   const [patients, setPatients] = useState<Patient[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Usando o sistema de breakpoints do antd
+  const screens = useBreakpoint();
+  // Considera mobile se não for lg nem maior
+  const isMobile = !screens.lg;
 
   // Função para buscar pacientes do Firebase
   const fetchPatients = async () => {
@@ -47,7 +54,53 @@ const ListagemPacientes: React.FC = () => {
     fetchPatients();
   }, []);
 
-  const columns: ColumnsType<Patient> = [
+  const getActionMenu = (record: Patient) => ({
+    items: [
+      {
+        key: 'edit',
+        label: 'Editar',
+        onClick: () => router.push(`/cadastro/${record.id}`),
+      },
+      {
+        key: 'form',
+        label: 'Formulário',
+        onClick: () => router.push(`/formulario/${record.id}`),
+      },
+      {
+        key: 'result',
+        label: 'Resultado',
+        onClick: () => router.push(`/resumo/${record.id}`),
+      },
+    ],
+  });
+
+  const mobileColumns: ColumnsType<Patient> = [
+    {
+      title: 'Nome',
+      dataIndex: 'nome',
+      key: 'nome',
+      sorter: (a, b) => a.nome.localeCompare(b.nome),
+      render: (nome, record) => (
+        <div>
+          <div>{nome}</div>
+          <div style={{ fontSize: '12px', color: '#666' }}>{record.email}</div>
+          <div style={{ fontSize: '12px', color: '#666' }}>{record.telefone}</div>
+        </div>
+      ),
+    },
+    {
+      title: 'Ações',
+      key: 'acoes',
+      width: 50,
+      render: (_, record) => (
+        <Dropdown menu={getActionMenu(record)} trigger={['click']}>
+          <Button type="text" icon={<MoreOutlined />} />
+        </Dropdown>
+      ),
+    },
+  ];
+
+  const desktopColumns: ColumnsType<Patient> = [
     {
       title: 'Nome',
       dataIndex: 'nome',
@@ -82,44 +135,43 @@ const ListagemPacientes: React.FC = () => {
         return genderMap[genero as keyof typeof genderMap];
       },
     },
-    // {
-    //   title: 'Status',
-    //   dataIndex: 'status',
-    //   key: 'status',
-    //   render: (status: string) => (
-    //     <Tag color={status === 'ATIVO' ? 'green' : 'red'}>
-    //       {status}
-    //     </Tag>
-    //   ),
-    // },
     {
       title: 'Ações',
       key: 'acoes',
       render: (_, record) => (
-        <Space size="middle">
+        <Space size="large">
           <Button 
             type="link" 
             onClick={() => router.push(`/cadastro/${record.id}`)}
           >
-            Editar
+            <EditOutlined 
+              style={{
+                color: '#1890ff',
+              }}
+              size={24}
+            />
           </Button>
           <Button 
             type="link" 
             onClick={() => router.push(`/formulario/${record.id}`)}
           >
-            Formulário
+            <FileOutlined 
+              style={{
+                color: '#1890ff',
+              }}
+              size={24}
+            />
           </Button>
           <Button 
             type="link" 
             onClick={() => router.push(`/resumo/${record.id}`)}
           >
-            Resultado
-          </Button>
-          <Button 
-            type="link" 
-            onClick={() => router.push(`/resultados/${record.id}`)}
-          >
-            Resultados
+            <BarChartOutlined 
+              style={{
+                color: '#1890ff',
+              }}
+              size={24}
+            />
           </Button>
         </Space>
       ),
@@ -134,17 +186,41 @@ const ListagemPacientes: React.FC = () => {
 
   return (
     <Card
-      title="Listagem de Pacientes"
+      title={
+        isMobile ? (
+          <div>
+            <div>Listagem de Pacientes</div>
+            <Button
+              type="primary"
+              icon={<PlusOutlined />}
+              onClick={() => router.push('/cadastro')}
+              style={{ width: '100%', marginTop: 8 }}
+              block
+            >
+              Novo Paciente
+            </Button>
+          </div>
+        ) : (
+          "Listagem de Pacientes"
+        )
+      }
       extra={
-        <Button
-          type="primary"
-          icon={<PlusOutlined />}
-          onClick={() => router.push('/cadastro')}
-        >
-          Novo Paciente
-        </Button>
+        !isMobile && (
+          <Button
+            type="primary"
+            icon={<PlusOutlined />}
+            onClick={() => router.push('/cadastro')}
+            style={{ width: 'auto' }}
+          >
+            Novo Paciente
+          </Button>
+        )
       }
       bordered={false}
+      style={{ 
+        margin: isMobile ? '8px' : '8px',
+        padding: isMobile ? '12px' : '12px' 
+      }}
     >
       <Space direction="vertical" style={{ width: '100%', marginBottom: 16 }}>
         <Search
@@ -156,15 +232,17 @@ const ListagemPacientes: React.FC = () => {
         />
       </Space>
       <Table
-        columns={columns}
+        columns={isMobile ? mobileColumns : desktopColumns}
         dataSource={filteredData}
         rowKey="id"
         loading={loading}
         pagination={{
-          pageSize: 10,
-          showSizeChanger: true,
+          pageSize: isMobile ? 5 : 10,
+          showSizeChanger: !isMobile,
           showTotal: (total) => `Total de ${total} pacientes`,
+          size: isMobile ? 'small' : 'default',
         }}
+        scroll={{ x: true }}
       />
     </Card>
   );
