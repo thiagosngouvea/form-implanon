@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { collection, addDoc } from "firebase/firestore";
 import { db } from "@firebase/firebaseConfig";
 import { useRouter } from "next/router";
@@ -39,6 +39,10 @@ interface FormData {
 }
 
 export default function Form() {
+  const router = useRouter();
+  const { id } = router.query; // Get the id parameter from the URL
+  const [isLoading, setIsLoading] = useState(true);
+  
   const [formData, setFormData] = useState<FormData>({
     inicio: "",
     amamentando: "",
@@ -74,22 +78,38 @@ export default function Form() {
     antibioticos: "",
   });
 
-  const router = useRouter();
+  // Add an effect to handle the loading state
+  useEffect(() => {
+    if (!router.isReady) return;
+    
+    // Once the router is ready and we have the ID, we can proceed
+    if (id) {
+      setIsLoading(false);
+    } else {
+      // If no ID is present, redirect back to the listing page
+      router.push('/');
+    }
+  }, [router.isReady, id]);
 
   const handleSubmit = async () => {
     try {
       const response = await addDoc(collection(db, "responses"), {
         ...formData,
-        userId: router.query.id as string,
-        submittedAt: new Date().toISOString(), // Adiciona timestamp
+        userId: id as string, // Use the id from router.query
+        submittedAt: new Date().toISOString(),
       });
       console.log("Respostas enviadas com ID:", response.id);
 
-      router.push(`/resultado/${router.query.id}`); // Redireciona para a página de resultado
+      router.push(`/resultado/${id}`);
     } catch (error) {
       console.error("Erro ao enviar respostas:", error);
     }
   };
+
+  // Show loading state
+  if (isLoading) {
+    return <div>Carregando...</div>;
+  }
 
   return (
     <div className="p-4">
